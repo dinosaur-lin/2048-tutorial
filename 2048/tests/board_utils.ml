@@ -46,18 +46,42 @@ let non_empty_squares = [t2; t4; t8; t16; t32; t64; t128; t256; t512; t1024; t20
 let squares = empty :: non_empty_squares
 
 let const x _ = x
-let arbitrary_square : square QCheck.Arbitrary.t =
-  QCheck.Arbitrary.among squares
-let arbitrary_non_empty_square : square QCheck.Arbitrary.t =
-  QCheck.Arbitrary.among non_empty_squares
-let arbitrary_row ~len : square list QCheck.Arbitrary.t =
-  QCheck.Arbitrary.list ~len:(const len) arbitrary_square
-let arbitrary_full_row ~len : square list QCheck.Arbitrary.t =
-  QCheck.Arbitrary.list ~len:(const len) arbitrary_non_empty_square
-let arbitrary_board ?(size=4) : board QCheck.Arbitrary.t =
-  QCheck.Arbitrary.(list ~len:(const size) (arbitrary_row ~len:size))
-let arbitrary_full_board ?(size=4) : board QCheck.Arbitrary.t =
-  QCheck.Arbitrary.(list ~len:(const size) (arbitrary_full_row ~len:size))
+
+let gen_square : square QCheck.Gen.t =
+  QCheck.Gen.oneofl squares  
+
+let gen_non_empty_square: square QCheck.Gen.t =
+  QCheck.Gen.oneofl non_empty_squares
+
+let gen_row ~len : square list QCheck.Gen.t =
+  QCheck.Gen.list_size (const len) gen_square
+  
+let gen_rull_row ~len : square list QCheck.Gen.t =
+  QCheck.Gen.list_size (const len) gen_non_empty_square
+
+let gen_board ?(size=4): board QCheck.Gen.t =
+  QCheck.Gen.list_size (const size) (gen_row ~len:size)
+
+let gen_full_board ?(size=4): board QCheck.Gen.t =
+  QCheck.Gen.list_size (const size) (gen_rull_row ~len:size)
+
+let arbitrary_square : square QCheck.arbitrary =
+  QCheck.make gen_square
+
+let arbitrary_non_empty_square : square QCheck.arbitrary =
+  QCheck.make gen_non_empty_square
+
+let arbitrary_row ~len : square list QCheck.arbitrary =
+  QCheck.make @@ gen_row ~len:len
+
+let arbitrary_full_row ~len : square list QCheck.arbitrary =
+  QCheck.make @@ gen_rull_row ~len:len
+  
+let arbitrary_board ?(size=4) : board QCheck.arbitrary =
+  QCheck.make gen_board
+
+let arbitrary_full_board ?(size=4) : board QCheck.arbitrary =
+  QCheck.make gen_full_board
 
 let rec iter n f x = if n = 0 then x else iter (n - 1) f (f x)
 

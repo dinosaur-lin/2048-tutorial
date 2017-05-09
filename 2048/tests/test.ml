@@ -50,17 +50,18 @@ type shift_board = G2048.move -> G2048.board -> G2048.board
 type insert_square = G2048.square -> G2048.board -> G2048.board option
 type is_game_over = G2048.board -> bool
 
-let mk_board_test = QCheck.mk_test ~n:1000 ~pp:string_of_board
+(* let mk_board_test = QCheck.mk_test ~n:1000 ~pp:string_of_board *)
+let mk_board_test = QCheck.Test.make ~count:200    
 
 let check_board_property nomen ?size (prop : board -> bool) =
-  assert_equal true
+  assert_equal 0
     ~msg:(Printf.sprintf "QCheck test %s" nomen)
-    QCheck.(run (mk_board_test ~name:nomen (arbitrary_board ?size) prop))
+    (QCheck_runner.run_tests [(mk_board_test ~name:nomen (arbitrary_board ?size) prop)])
 
 let check_full_board_property nomen ?size (prop : board -> bool) =
-  assert_equal true
+  assert_equal 0
     ~msg:(Printf.sprintf "QCheck test %s" nomen)
-    QCheck.(run (mk_board_test ~name:nomen (arbitrary_full_board ?size) prop))
+    (QCheck_runner.run_tests [(mk_board_test ~name:nomen (arbitrary_full_board ?size) prop)])
 
 let test_shift_board_fixpoint shift_board =
   check_board_property
@@ -74,11 +75,8 @@ let test_add_to_full insert_square =
     (fun board -> insert_square t2 board = None)
 
 let test_add insert_square =
-  check_board_property "Squares can be added to a board with spaces"
-    QCheck.(Prop.((fun board -> not (is_board_full board))
-                  ==>
-                  (fun board ->
-                     insert_square t2 board <> None)))
+  check_board_property "Squares can be added to a board with spaces" (fun board ->  QCheck.(==>) (not (is_board_full board)) ((insert_square t2 board) <> None))
+    (* QCheck.(==>) (fun board -> not (is_board_full board)) (fun board -> insert_square t2 board <> None)*)
 
   (* Some tests for is_board_full *)
 let test_is_board_full () =
@@ -164,9 +162,7 @@ let test_insert insert_square =
     | None -> failwith "Insertion failed"
   in
   check_board_property "insert_into_board adds a square to the board"
-    QCheck.(Prop.((fun board -> not (is_board_full board))
-                  ==>
-                  (insert_property t8)))
+    (fun board -> QCheck.(==>) (not (is_board_full board)) (insert_property t8 board))
 
 let test_insert_row_completely_empty insert_square =
   assert_equal [None; None; None; Some 2]
