@@ -120,12 +120,14 @@ module Default = struct
   (* TODO: Complete the function `is_square_2048`. The function should
      return `true` if a square has the value `2048` and `false`
      otherwise. *)
-  let is_square_2048 (sq : square) = false
+  let is_square_2048 (sq : square) = sq == t2048
 
   (* TODO: * Write the `is_board_winning` function. The `List.exists` function
      (which you can try out in an IOCaml notebook) may prove
      useful. *)
-  let is_board_winning (b : board) = false
+  let is_row_winning (r: row) = List.exists (fun j -> is_square_2048 j) r
+
+  let is_board_winning (b : board) = List.exists (fun i -> is_row_winning i) b
 
   (* At this point you should be able to run the tests again to check
      that your implementation is correct. *)
